@@ -84,7 +84,7 @@ with open(os.path.join(vystupy, 'udaje.csv'), 'w') as ud, open(
     ])
     poc.writerow([
         'ico', 'nazev_organu', 'datum_zapisu', 'datum_vymazu', 'nazev_funkce',
-        'ObchodniFirma', 'ICO', 'adresa'
+        'ObchodniFirma', 'ico_organ', 'adresa'
     ])
 
     for rw, el in enumerate(tf):
