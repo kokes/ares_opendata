@@ -1,0 +1,229 @@
+<!-- kod z mapstarter -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <title>Struktura z ARES</title>
+<style>
+
+body {
+  font: 1em Arial, sans-serif;
+  background: #ddd;
+}
+div#cnt {
+    max-width: 960px;
+    padding-top: 10%;
+    margin: 1em auto;
+
+    border: 1px solid #ccc;
+    padding: 1.5em;
+    background-color: white;
+    /*border-radius: 10px;*/
+    box-shadow: 0 0 10px #ccc;
+}
+
+div#cnt input[type=text] {
+    font-size: 1.5em;
+    display: block;
+    margin: 0 auto;
+    width: 70%;
+}
+
+div#firma {
+    font-style: italic;
+}
+
+</style>
+
+<script type='text/javascript'>
+
+const endp = 'http://localhost:8089/api/';
+
+window.onhashchange = function () {
+    const hs = window.location.hash.slice(1); // vysekni '#'
+    let ind = hs.indexOf('/');
+    if (ind === -1) {
+        console.error('cannot resolve ' + hs);
+        return;
+    }
+
+    let mod = hs.slice(0, ind);
+    let q = hs.slice(ind + 1);
+
+    for (let el of ['hinty', 'firma', 'posoby', 'fosoby']) {
+        smaz(document.getElementById(el));
+    }
+
+    if (mod === 'q') {
+        const url = endp + `hledej/${q}`;
+        ajax_get_json(url, (dt) => {
+            if (document.getElementById('hl').value !== dt.q) return; // pokud prichazi pozde, tak zahod
+            renderuj_hinty(dt.data);
+        });
+
+        return;
+    }
+
+    if (mod == 'ico') {
+        const urlp = endp + `posoby/${q}`;
+        const urlf = endp + `fosoby/${q}`;
+        const urlfr = endp + `firma/${q}`;
+
+        ajax_get_json(urlfr, (dt) => {
+            renderuj_firmu(dt);
+        });
+
+        ajax_get_json(urlp, (dt) => {
+            renderuj_posoby(dt);
+        });
+
+        ajax_get_json(urlf, (dt) => {
+            renderuj_fosoby(dt);
+        });
+
+        return;
+    }
+
+    console.error('cannot resolve ' + hs);
+};
+
+function ajax_get_json(url, callback)
+{
+    console.log(url);
+    let rr = new XMLHttpRequest();
+    rr.onreadystatechange = function() {
+        if (rr.readyState == 4 && rr.status == 200)
+            callback(JSON.parse(rr.responseText));
+        else if (rr.readyState == 4)
+            console.error(rr)
+    }
+    rr.open('GET', url);
+    rr.send(null);
+}
+
+window.onload = function () {
+    let f = document.getElementById('hl');
+    f.addEventListener('keyup', function(e) {
+        const q = e.target.value;
+        if (q.length < 3) {
+            return;
+        }
+        const enc = encodeURIComponent(q);
+        window.location.hash = 'q/' + enc;
+    });
+
+    const hs = window.location.hash;
+    if (hs.startsWith('#q/')) {
+        f.value = decodeURIComponent(hs.slice(3));
+        let ev = new Event('keyup');
+        f.dispatchEvent(ev);
+    }
+
+    if (hs.length > 0) {
+        let ev = new Event('hashchange');
+        window.dispatchEvent(ev); // při initu by se to nedispatchlo
+    }
+};
+
+function renderuj_hinty(dt) {
+    let tg = document.getElementById('hinty');
+
+    let ul = document.createElement('ul');
+    for (let el of dt) {
+        let li = document.createElement('li');
+        li.innerHTML = `<a href='#ico/${el.ico}'>${el.obchodni_firma}</a> <small>(${el.datum_zapisu}&ndash;${el.datum_vymazu})</small>`;
+
+        ul.appendChild(li);
+    }
+    tg.appendChild(ul);
+}
+
+function renderuj_firmu(dt) {
+    let tg = document.getElementById('firma');
+
+    tg.innerHTML = `Nalezeno info k firmám: ${dt.length}`;
+
+    for (let fr of dt) {
+        let h4 = document.createElement('h4');
+        h4.textContent = fr.obchodni_firma;
+        tg.appendChild(h4);
+
+        let ul = document.createElement('ul');
+
+        for (let el of Object.keys(fr)) {
+            if (['obchodni_firma', 'sidlo'].includes(el)) continue;
+
+            let li = document.createElement('li');
+            li.innerHTML = `${el}: ${fr[el]}`;
+
+            ul.appendChild(li);
+        }
+        
+        tg.appendChild(ul);
+    }
+}
+
+function renderuj_posoby(dt) {
+    let tg = document.getElementById('posoby');
+
+    for (let sec of ['je_vlastnen', 'vlastni']) {
+        console.log(dt[sec].length, sec);
+
+        let ul = document.createElement('ul');
+
+        for (let el of dt[sec]) {
+            let li = document.createElement('li');
+            li.innerHTML = `<a href='#ico/${el.ico}'>${el.obchodni_firma}</a> <small>(${el.datum_zapisu}&ndash;${el.datum_vymazu}; ${el.nazev_organu} - ${el.nazev_funkce})</small>`;
+
+            ul.appendChild(li);
+        }
+        let h3 = document.createElement('h3');
+        h3.textContent = sec === 'je_vlastnen' ? 'Je (spolu)vlastněn' : '(Spolu)vlastní';
+        tg.appendChild(h3);
+        tg.appendChild(ul);
+    }
+}
+
+function renderuj_fosoby(dt) {
+    let tg = document.getElementById('fosoby');
+
+    let h3 = document.createElement('h3');
+    h3.textContent = 'Angažované fyzické osoby';
+    tg.appendChild(h3);
+
+    let ul = document.createElement('ul');
+
+    for (let el of dt) {
+        let li = document.createElement('li');
+        li.innerHTML = `${el.jmeno} ${el.prijmeni} <small>(${el.datum_zapisu}&ndash;${el.datum_vymazu}; ${el.nazev_organu} - ${el.nazev_funkce})</small>`;
+
+        ul.appendChild(li);
+    }
+    tg.appendChild(ul);
+}
+
+function smaz(tg) {
+    while (tg.firstChild)
+        tg.removeChild(tg.firstChild);
+}
+
+</script>
+
+
+</head>
+<body>
+
+<div id='cnt'>
+    <input type='text' name='q' id='hl' placeholder='Hledej podle názvu firmy' />
+    <div id='hinty'></div>
+
+    <div id='firma'></div>
+
+    <div id='posoby'></div>
+    <div id='fosoby'></div>
+
+</div>
+
+</body>
+</html>

@@ -65,7 +65,7 @@ def organi(root, ico):
 
 tf = tarfile.open(os.path.join(vstupy, 'ares_vreo_all.tar.gz'))
 
-with open(os.path.join(vystupy, 'udaje.csv'), 'w') as ud, open(
+with open(os.path.join(vystupy, 'firmy.csv'), 'w') as ud, open(
         os.path.join(vystupy, 'fosoby.csv'), 'w') as fo, open(
             os.path.join(vystupy, 'posoby.csv'), 'w') as po:
     udc = csv.writer(ud)
@@ -73,18 +73,18 @@ with open(os.path.join(vystupy, 'udaje.csv'), 'w') as ud, open(
     poc = csv.writer(po)
 
     cols = [
-        'Aktualizace_DB', 'Datum_vypisu', 'Cas_vypisu', 'Typ_vypisu',
-        'Rejstrik', 'ICO', 'ObchodniFirma', 'DatumZapisu', 'DatumVymazu',
-        'Sidlo'
+        'aktualizace_db', 'datum_vypisu', 'cas_vypisu', 'typ_vypisu',
+        'rejstrik', 'ico', 'obchodni_firma', 'datum_zapisu', 'datum_vymazu',
+        'sidlo'
     ]
     udc.writerow(cols)
     foc.writerow([
         'ico', 'nazev_organu', 'datum_zapisu', 'datum_vymazu', 'nazev_funkce',
-        'jmeno', 'prijmeni', 'titulPred', 'titulZa', 'adresa', 'bydliste'
+        'jmeno', 'prijmeni', 'titul_pred', 'titul_za', 'adresa', 'bydliste'
     ])
     poc.writerow([
         'ico', 'nazev_organu', 'datum_zapisu', 'datum_vymazu', 'nazev_funkce',
-        'ObchodniFirma', 'ico_organ', 'adresa'
+        'obchodni_firma', 'ico_organ', 'adresa'
     ])
 
     for rw, el in enumerate(tf):
